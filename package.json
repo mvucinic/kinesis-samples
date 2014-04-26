@@ -1,0 +1,33 @@
+{
+  "name": "kinesis-samples",
+  "version": "0.0.1",
+  "description": "Collection of AWS Kinesis samples",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "aws-sdk": "~2.x",
+    "node-uuid": "~1.4.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mchmarny/kinesis-samples.git"
+  },
+  "engines": {
+    "node": ">= 0.6.0"
+  },
+  "keywords": [
+    "kinesis",
+    "iot",
+    "aws",
+    "samples"
+  ],
+  "author": "mchmarny <mark@chmarny.com> (http://mark.chmarny.com/)",
+  "license": "Apache2",
+  "bugs": {
+    "url": "https://github.com/mchmarny/kinesis-samples/issues"
+  },
+  "homepage": "https://github.com/mchmarny/kinesis-samples",
+  "readmeFilename": "README.md"
+}
