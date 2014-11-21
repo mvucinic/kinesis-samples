@@ -1,6 +1,7 @@
 var AWS = require('aws-sdk'),
-	uuid = require('node-uuid'),
-    stdio = require('stdio');
+	  uuid = require('node-uuid'),
+    stdio = require('stdio'),
+    os = require('os');
 
 // command line arguments
 var env = stdio.getopt({
@@ -15,7 +16,9 @@ AWS.config.apiVersions = env.version;
 
 // stream
 var kinesis = new AWS.Kinesis();
-var stateArgs = { StreamName: env.stream };
+var stateArgs = {
+  StreamName: env.stream
+};
 
 var toBase64EncodedString = function(str){
   return new Buffer(str || '').toString('base64');
@@ -35,11 +38,18 @@ var sendData = function(key, obj){
 
 var mockData = function(){
 	var id = uuid.v4();
-	sendData(id, {
-		'id': id,
-		'ts': new Date().getTime(),
-		'tx': 'Long message' });
-   setTimeout(mockData, 1000);
+  var load = os.loadavg();
+  var msg = {
+    'metric-id': id,
+    'metric-ts': new Date().getTime(),
+    'cpu-load-5min': load[0],
+    'cpu-load-10min': load[1],
+    'cpu-load-15min': load[2],
+    'free-memory': os.freemem()
+  };
+	sendData(id, msg);
+  console.dir(msg);
+  setTimeout(mockData, 1000);
 }
 
 kinesis.describeStream(stateArgs, function (err, data) {
@@ -52,7 +62,7 @@ kinesis.describeStream(stateArgs, function (err, data) {
   		return;
   	}
   	var status = data.StreamDescription.StreamStatus;
-  	console.log('STATUS: ' + status);
+  	console.log('Stream status: ' + status);
 
   	// mock data
   	mockData();
