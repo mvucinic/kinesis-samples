@@ -34,7 +34,8 @@ The message that will be mocked for you looks like this:
   'cpu-load-5min': 1.93603515625,
   'cpu-load-10min': 1.56298828125,
   'cpu-load-15min': 1.4638671875,
-  'free-memory': 2255056896 }
+  'free-memory': 2255056896 
+}
 ```
 
 ## Put
