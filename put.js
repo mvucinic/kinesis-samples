@@ -1,66 +1,47 @@
 var AWS = require('aws-sdk'),
-	 uuid = require('node-uuid'),
-    config = require('./config');
+    uuid = require('node-uuid'),
+    stdio = require('stdio');
 
-/*
-	Assumes you have:
+// command line arguments
+var env = stdio.getopt({
+    'region':  { key: 'r', description: 'AWS Region: [us-west-2]', default: 'us-west-2', args: 1 },
+    'version': { key: 'v', description: 'API Version: [2013-12-02]', default: '2013-12-02', args: 1 },
+    'stream':  { key: 's', description: 'Stream: []', default: '', args: 1 },
+    'message':  { key: 'm', description: 'Message: []', default: '', args: 1 }
+});
 
-	1. Set your credentials as environment variables
-
-		export AWS_ACCESS_KEY_ID='key'
-		export AWS_SECRET_ACCESS_KEY='secret'
-
-	2. Create a kinesis stream and define its name in 
-	   the config file
-*/
+// validate
+if (!env.message){
+  console.log('Message required');
+  process.exit(1);
+}
 
 // configure
-AWS.config.region = config.aws.region;
-AWS.config.apiVersions = config.aws.kinesis;
+AWS.config.region = env.region;
+AWS.config.apiVersions = env.version;
 
 // stream
 var kinesis = new AWS.Kinesis();
+var stateArgs = { StreamName: env.stream };
 
 var toBase64EncodedString = function(str){
   return new Buffer(str || '').toString('base64');
 };
 
 var sendData = function(key, obj){
-	var putArgs = {
-	  Data: toBase64EncodedString(obj),
-	  PartitionKey: key,
-	  StreamName: config.aws.stream
-	};
-	kinesis.putRecord(putArgs, function(err, data) {
-	  if (err) console.log(err, err.stack);
-	  else     console.log(data);
-	});
+    var putArgs = {
+      Data: toBase64EncodedString(obj),
+      PartitionKey: key,
+      StreamName: env.stream
+    };
+    kinesis.putRecord(putArgs, function(err, data) {
+      if (err) console.log(err, err.stack);
+      else     console.log(data);
+    });
 };
 
-var mockData = function(){
-	var id = uuid.v4();
-	sendData(id, { 
-		'id': id, 
-		'ts': new Date().getTime(), 
-		'tx': 'Long message' });	
-   setTimeout(mockData, 1000);
-}
+sendData(uuid.v4(), {
+    'on': new Date().getTime(),
+    'data': env.message }
+);
 
-var stateArgs = { StreamName: config.aws.stream };
-kinesis.describeStream(stateArgs, function (err, data) {
-  if (err) console.log(err, err.stack);
-  else {
-  	if (!data || 
-  		 !data.StreamDescription || 
-  		 !data.StreamDescription.StreamStatus){
-  		console.log('Null status response');
-  		return;
-  	}
-  	var status = data.StreamDescription.StreamStatus;
-  	console.log('STATUS: ' + status);
-
-  	// mock data
-  	mockData();
-
-  }
-});

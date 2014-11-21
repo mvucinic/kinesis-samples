@@ -1,9 +1,0 @@
-{ 
-	"aws": {
-		"stream": "edge",
-		"region": "us-east-1",
-		"kinesis": {
-			"apiVersion": "2013-12-02"
-		}
-	}
-}
