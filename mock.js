@@ -14,6 +14,9 @@ var env = stdio.getopt({
 AWS.config.region = env.region;
 AWS.config.apiVersions = env.version;
 
+// few local variables
+var i = 0, printOn = 500, d = 1
+
 // stream
 var kinesis = new AWS.Kinesis();
 var stateArgs = {
@@ -30,9 +33,9 @@ var sendData = function(key, obj){
 	  PartitionKey: key,
 	  StreamName: env.stream
 	};
+  if (i % printOn == 0) console.log('item[%d]', i);
 	kinesis.putRecord(putArgs, function(err, data) {
 	  if (err) console.log(err, err.stack);
-	  else     console.log(data);
 	});
 };
 
@@ -41,6 +44,7 @@ var mockData = function(){
   var load = os.loadavg();
   var msg = {
     'metric-id': id,
+    'metric-index': ++i,
     'metric-ts': new Date().getTime(),
     'cpu-load-5min': load[0],
     'cpu-load-10min': load[1],
@@ -48,8 +52,7 @@ var mockData = function(){
     'free-memory': os.freemem()
   };
 	sendData(id, msg);
-  console.dir(msg);
-  setTimeout(mockData, 1000);
+  setTimeout(mockData, d);
 }
 
 kinesis.describeStream(stateArgs, function (err, data) {
