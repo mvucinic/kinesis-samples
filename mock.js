@@ -1,5 +1,6 @@
 var AWS = require('aws-sdk'),
 	  uuid = require('node-uuid'),
+    mac = require('getmac'),
     stdio = require('stdio'),
     os = require('os'),
     md5 = require('MD5');
@@ -16,7 +17,10 @@ AWS.config.region = env.region;
 AWS.config.apiVersions = env.version;
 
 // few local variables
-var i = 0, printOn = 500, delay = 1 // in ms
+var srcId = '',
+    i = 0,
+    printOn = 500,
+    delay = 1000 // in ms
 
 // stream
 var kinesis = new AWS.Kinesis();
@@ -39,11 +43,6 @@ var sendData = function(key, data){
 	kinesis.putRecord(putArgs, function(err, resp) {
 	  if (err) {
       console.log(err, err.stack);
-    } else {
-      console.log('put:')
-      console.dir(putArgs);
-      console.log('resp:')
-      console.dir(resp);
     }
 	});
 };
@@ -51,6 +50,7 @@ var sendData = function(key, data){
 var mockData = function(){
   var load = os.loadavg();
   var msg = {
+    'src-id': srcId,
     'metric-id': uuid.v4(),
     'metric-ts': new Date().getTime(),
     'cpu-load-5min': load[0],
@@ -58,6 +58,7 @@ var mockData = function(){
     'cpu-load-15min': load[2],
     'free-memory': os.freemem()
   };
+  console.dir(msg);
   var data = toBase64EncodedString(JSON.stringify(msg));
   var key = md5(data);
 	sendData(key, data);
@@ -76,8 +77,15 @@ kinesis.describeStream(stateArgs, function (err, data) {
   	var status = data.StreamDescription.StreamStatus;
   	console.log('Stream status: ' + status);
 
-  	// mock data
-  	mockData();
-
+    mac.getMac(function(err, macAddress){
+        if (err) {
+          throw err;
+        }else{
+          // little format on the mac address
+          srcId = 'd-' + macAddress.replace(/:/g, '-');
+          // start
+          mockData();
+        }
+    });
   }
 });

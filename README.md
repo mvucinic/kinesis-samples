@@ -17,9 +17,9 @@ You'll need to do this only once per console session. After that, you can execut
 
 ## Mock
 
-The `mock` sample is a good one as it will validate the Kinesis `shard` configuration and the necessary IAM policy. The mock sample creates a message loop which send a message a second to the Kinesis endpoint. 
+The `mock` sample is a good one as it will validate the Kinesis `shard` configuration and the necessary IAM policy. The mock sample creates a message loop which send a CPU/RAM status message every second to the Kinesis endpoint. 
 
-To run the `mock.js` sample, where `test-events` is a name of your stream:
+To run the `mock.js` sample, with the name of your stream:
 
 ```
 node mock -s 'test-events'
@@ -29,12 +29,13 @@ The message that will be mocked for you looks like this:
 
 ```
 { 
-  'metric-id': '29452eea-b401-4d6c-b049-62607cb4b180',
-  'metric-ts': 1416539742011,
-  'cpu-load-5min': 1.93603515625,
-  'cpu-load-10min': 1.56298828125,
-  'cpu-load-15min': 1.4638671875,
-  'free-memory': 2255056896 
+  'src-id': 'd-84-38-35-60-b0-45',
+  'metric-id': '700a16fa-a7c3-4059-aed8-69e13927bf6e',
+  'metric-ts': 1416692211189, 
+  'cpu-load-5min': 1.326171875,
+  'cpu-load-10min': 1.328125,
+  'cpu-load-15min': 1.3271484375,
+  'free-memory': 2406621184 
 }
 ```
 
