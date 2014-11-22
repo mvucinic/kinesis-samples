@@ -1,6 +1,6 @@
 var AWS = require('aws-sdk'),
-    uuid = require('node-uuid'),
-    stdio = require('stdio');
+    stdio = require('stdio'),
+    md5 = require('MD5');
 
 // command line arguments
 var env = stdio.getopt({
@@ -25,23 +25,33 @@ var kinesis = new AWS.Kinesis();
 var stateArgs = { StreamName: env.stream };
 
 var toBase64EncodedString = function(str){
-  return new Buffer(str || '').toString('base64');
+  return new Buffer(str || '{}').toString('base64');
 };
 
-var sendData = function(key, obj){
+var sendData = function(key, data){
     var putArgs = {
-      Data: toBase64EncodedString(obj),
+      Data: data,
       PartitionKey: key,
       StreamName: env.stream
     };
-    kinesis.putRecord(putArgs, function(err, data) {
-      if (err) console.log(err, err.stack);
-      else     console.log(data);
+    kinesis.putRecord(putArgs, function(err, resp) {
+      if (err) {
+        console.log(err, err.stack);
+      } else {
+        console.log('put:')
+        console.dir(putArgs);
+        console.log('resp:')
+        console.dir(resp);
+      }
     });
 };
 
-sendData(uuid.v4(), {
-    'on': new Date().getTime(),
-    'data': env.message }
-);
+var msg = {
+  'on': new Date().getTime(),
+  'data': env.message
+}
+
+var data = toBase64EncodedString(JSON.stringify(msg));
+var key = md5(data);
+sendData(key, data);
 

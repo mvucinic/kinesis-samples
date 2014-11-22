@@ -1,7 +1,8 @@
 var AWS = require('aws-sdk'),
 	  uuid = require('node-uuid'),
     stdio = require('stdio'),
-    os = require('os');
+    os = require('os'),
+    md5 = require('MD5');
 
 // command line arguments
 var env = stdio.getopt({
@@ -15,7 +16,7 @@ AWS.config.region = env.region;
 AWS.config.apiVersions = env.version;
 
 // few local variables
-var i = 0, printOn = 500, d = 1
+var i = 0, printOn = 500, delay = 1 // in ms
 
 // stream
 var kinesis = new AWS.Kinesis();
@@ -27,32 +28,40 @@ var toBase64EncodedString = function(str){
   return new Buffer(str || '').toString('base64');
 };
 
-var sendData = function(key, obj){
+var sendData = function(key, data){
 	var putArgs = {
-	  Data: toBase64EncodedString(obj),
+	  Data: data,
 	  PartitionKey: key,
-	  StreamName: env.stream
+	  StreamName: env.stream,
+    SequenceNumberForOrdering: (++i).toString()
 	};
   if (i % printOn == 0) console.log('item[%d]', i);
-	kinesis.putRecord(putArgs, function(err, data) {
-	  if (err) console.log(err, err.stack);
+	kinesis.putRecord(putArgs, function(err, resp) {
+	  if (err) {
+      console.log(err, err.stack);
+    } else {
+      console.log('put:')
+      console.dir(putArgs);
+      console.log('resp:')
+      console.dir(resp);
+    }
 	});
 };
 
 var mockData = function(){
-	var id = uuid.v4();
   var load = os.loadavg();
   var msg = {
-    'metric-id': id,
-    'metric-index': ++i,
+    'metric-id': uuid.v4(),
     'metric-ts': new Date().getTime(),
     'cpu-load-5min': load[0],
     'cpu-load-10min': load[1],
     'cpu-load-15min': load[2],
     'free-memory': os.freemem()
   };
-	sendData(id, msg);
-  setTimeout(mockData, d);
+  var data = toBase64EncodedString(JSON.stringify(msg));
+  var key = md5(data);
+	sendData(key, data);
+  setTimeout(mockData, delay);
 }
 
 kinesis.describeStream(stateArgs, function (err, data) {
