@@ -1,15 +1,17 @@
+"use strict";
+
 var AWS = require('aws-sdk'),
 	  uuid = require('node-uuid'),
-    mac = require('getmac'),
     stdio = require('stdio'),
     os = require('os'),
     md5 = require('MD5');
 
 // command line arguments
 var env = stdio.getopt({
-    'region':  { key: 'r', description: 'AWS Region: [us-west-2]', default: 'us-west-2', args: 1 },
-    'version': { key: 'v', description: 'API Version: [2013-12-02]', default: '2013-12-02', args: 1 },
-    'stream':  { key: 's', description: 'Stream: []', default: '', args: 1 }
+    'instance': { key: 'i', description: 'Instance: [autogen]', default: uuid.v4(), args: 1 },
+    'region':   { key: 'r', description: 'AWS Region: [us-west-2]', default: 'us-west-2', args: 1 },
+    'version':  { key: 'v', description: 'API Version: [2013-12-02]', default: '2013-12-02', args: 1 },
+    'stream':   { key: 's', description: 'Stream: []', default: '', args: 1 }
 });
 
 // configure
@@ -24,9 +26,7 @@ var srcId = '',
 
 // stream
 var kinesis = new AWS.Kinesis();
-var stateArgs = {
-  StreamName: env.stream
-};
+var stateArgs = { StreamName: env.stream };
 
 var toBase64EncodedString = function(str){
   return new Buffer(str || '').toString('base64');
@@ -50,13 +50,15 @@ var sendData = function(key, data){
 var mockData = function(){
   var load = os.loadavg();
   var msg = {
-    'src-id': srcId,
-    'metric-id': uuid.v4(),
-    'metric-ts': new Date().getTime(),
-    'cpu-load-5min': load[0],
-    'cpu-load-10min': load[1],
-    'cpu-load-15min': load[2],
-    'free-memory': os.freemem()
+    'source_id': env.instance,
+    'event_id': uuid.v4(),
+    'event_ts': new Date().getTime(),
+    'metrics': [
+      { 'key': 'cpu_load_5min', 'value': load[0] },
+      { 'key': 'cpu_load_10min', 'value': load[1] },
+      { 'key': 'cpu_load_15min', 'value': load[2] },
+      { 'key': 'free_memory', 'value': os.freemem() }
+    ]
   };
   console.dir(msg);
   var data = toBase64EncodedString(JSON.stringify(msg));
@@ -77,15 +79,7 @@ kinesis.describeStream(stateArgs, function (err, data) {
   	var status = data.StreamDescription.StreamStatus;
   	console.log('Stream status: ' + status);
 
-    mac.getMac(function(err, macAddress){
-        if (err) {
-          throw err;
-        }else{
-          // little format on the mac address
-          srcId = 'd-' + macAddress.replace(/:/g, '-');
-          // start
-          mockData();
-        }
-    });
+    mockData();
+
   }
 });

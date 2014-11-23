@@ -1,12 +1,16 @@
+"use strict";
+
 var AWS = require('aws-sdk'),
+    uuid = require('node-uuid'),
     stdio = require('stdio'),
     md5 = require('MD5');
 
 // command line arguments
 var env = stdio.getopt({
-    'region':  { key: 'r', description: 'AWS Region: [us-west-2]', default: 'us-west-2', args: 1 },
-    'version': { key: 'v', description: 'API Version: [2013-12-02]', default: '2013-12-02', args: 1 },
-    'stream':  { key: 's', description: 'Stream: []', default: '', args: 1 },
+    'instance': { key: 'i', description: 'Instance: [autogen]', default: uuid.v4(), args: 1 },
+    'region':   { key: 'r', description: 'AWS Region: [us-west-2]', default: 'us-west-2', args: 1 },
+    'version':  { key: 'v', description: 'API Version: [2013-12-02]', default: '2013-12-02', args: 1 },
+    'stream':   { key: 's', description: 'Stream: []', default: '', args: 1 },
     'message':  { key: 'm', description: 'Message: []', default: '', args: 1 }
 });
 
@@ -47,11 +51,17 @@ var sendData = function(key, data){
 };
 
 var msg = {
-  'on': new Date().getTime(),
-  'data': env.message
+  'source_id': env.instance,
+  'event_id': uuid.v4(),
+  'event_ts': new Date().getTime(),
+  'content': env.message
 }
 
-var data = toBase64EncodedString(JSON.stringify(msg));
+console.log('message:');
+console.dir(msg);
+
+var msgStr = JSON.stringify(msg);
+var data = toBase64EncodedString(msgStr);
 var key = md5(data);
 sendData(key, data);
 
