@@ -28,6 +28,7 @@ AWS.config.apiVersions = env.version;
 var kinesis = new AWS.Kinesis();
 var stateArgs = { StreamName: env.stream };
 
+
 var toBase64EncodedString = function(str){
   return new Buffer(str || '{}').toString('base64');
 };

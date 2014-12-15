@@ -3,7 +3,10 @@ logs
 *.log
 
 # Run script
-*.sh
+env.sh
+
+# Compressed version of the code
+*.zip
 
 # Runtime data
 pids
